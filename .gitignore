@@ -1,3 +1,7 @@
+# Visual Studio Folder and Build Folder
+.vs
+x64
+
 # Prerequisites
 *.d
 
