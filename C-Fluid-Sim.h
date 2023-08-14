@@ -43,6 +43,7 @@ void freeGrid(Grid* grid);
 void printDensities(Grid* grid);
 void addDensity(Grid* grid, int x, int y, float amount);
 void addVelocity(Grid* grid, int x, int y, float amountX, float amountY);
+int showGUI();
 
 static void setBoundary(ArrayType arrayType, float* array, int size);
 static void solve(ArrayType arrayType, float* array, float* prevArray, float flow, float deltaTime, int iteration, int size);

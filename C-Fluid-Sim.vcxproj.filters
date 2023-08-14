@@ -24,4 +24,7 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="..\..\sdk\SDL2-2.28.2\lib\x64\SDL2.dll" />
+  </ItemGroup>
 </Project>
