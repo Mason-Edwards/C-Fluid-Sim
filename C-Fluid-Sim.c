@@ -508,8 +508,6 @@ void drawVelocityX(Grid *grid, SDL_Renderer* renderer, int i, int j, int cellSiz
         .h = cellSize,
     };
 
-    float test = 0.5 * 700.0f;
-
     Uint8 velocity = 0;
     float gridVelocity = grid->Vx[INDEX(i, j)];
     if (gridVelocity > 0.0f)
