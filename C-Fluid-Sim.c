@@ -8,14 +8,21 @@
 
 #include "C-Fluid-Sim.h"
 
+// TODO Issues
+// 1.Velocity should be in the direction that the mouse is being moved.
+// 2.When velocity of squares has dissipated they are no longer reached by density, causing you to need to
+// move the mouse to an area to put some velocity there.
+//
+// As a fix, pressing w or s will add velocity to the whole grid meaning the density acts somewhat normal.
+
 int main(int argc, char *argv[])
 {
     Grid* grid = createGrid(SIZE, DIFFUSION, VISCOSITY, DELTATIME);
 
     for (int i = 0; i < grid->area; i++)
     {
-        grid->Vx[i] += 0.1f;
-        grid->Vy[i] += 0.1f;
+        grid->Vx[i] += 0.5f;
+        grid->Vy[i] += 0.5f;
     }
 
     showGUI(grid);
@@ -61,13 +68,37 @@ void freeGrid(Grid* grid)
 
 void addDensity(Grid* grid, int x, int y, float amount)
 {
-    grid->density[INDEX(x,y)] += amount;
+    float density = grid->density[INDEX(x, y)];
+    if (density + amount > 50.f)
+    {
+        grid->density[INDEX(x, y)] = 50.f;
+    }
+    else
+    {
+        grid->density[INDEX(x, y)] += amount;
+    }
 }
 
 void addVelocity(Grid* grid, int x, int y, float amountX, float amountY)
 {
-    grid->Vx[INDEX(x, y)] += amountX;
-    grid->Vy[INDEX(x, y)] += amountY;
+    float vx = grid->Vx[INDEX(x, y)];
+    float vy = grid->Vx[INDEX(x, y)];
+
+    if (vx + amountX > 0.7f)
+    {
+        grid->Vx[INDEX(x, y)] = 0.5f;
+    }
+    else {
+        grid->Vx[INDEX(x, y)] += amountX;
+    }
+
+    if (vy + amountY > 0.7f)
+    {
+        grid->Vy[INDEX(x, y)] = 0.7f;
+    }
+    else {
+        grid->Vy[INDEX(x, y)] += amountY;
+    }
 }
 
 void printGrid(Grid* grid)
@@ -239,22 +270,6 @@ static void advect(int b, float* d, float* d0, float* velocX, float* velocY, flo
             int j0i = (int)j0;
             int j1i = (int)j1;
 
-            //d[INDEX(i, j)] =
-            //    s0 * (t0 * (d0[INDEX(i0i, j0i)]
-            //        + d0[INDEX(i0i, j0i)])
-            //        + (t1 * (d0[INDEX(i0i, j1i)]
-            //            + d0[INDEX(i0i, j1i)])))
-            //    + s1 * (t0 * (d0[INDEX(i1i, j0i)]
-            //        + d0[INDEX(i1i, j0i)])
-            //        + (t1 * (d0[INDEX(i1i, j1i)]
-            //            + d0[INDEX(i1i, j1i)])));
-
-            //d[INDEX(i, j)] =
-            //    s0 * (t0 * d0[INDEX(i0i, j0i)])
-            //    + (t1 * d0[INDEX(i0i, j1i)])
-            //    + s1 * (t0 * d0[INDEX(i1i, j0i)])
-            //    + (t1 * d0[INDEX(i1i, j1i)]);
-
             d[INDEX(i, j)] =
                 s0 * (t0 * d0[INDEX(i0i, j0i)] + t1 * d0[INDEX(i0i, j1i)]) +
                 s1 * (t0 * d0[INDEX(i1i, j0i)] + t1 * d0[INDEX(i1i, j1i)]);
@@ -352,8 +367,18 @@ int showGUI(Grid *grid)
             case SDL_KEYDOWN:
                 switch (event.key.keysym.sym) {
                 case SDLK_w:
+                    for (int i = 0; i < grid->area; i++)
+                    {
+                        grid->Vx[i] = 0.005f;
+                        grid->Vy[i] = 0.005f;
+                    }
                 case SDLK_UP:
                 case SDLK_s:
+                    for (int i = 0; i < grid->area; i++)
+                    {
+                        grid->Vx[i] = -0.001f;
+                        grid->Vy[i] = -0.000001f;
+                    }
                 case SDLK_DOWN:
                 case SDLK_a:
                 case SDLK_LEFT:
@@ -365,12 +390,6 @@ int showGUI(Grid *grid)
             case SDL_MOUSEBUTTONDOWN:
                 square.x = (event.motion.x / cellSize);
                 square.y = (event.motion.y / cellSize);
-                addDensity(grid, square.x, square.y, 20.0f);
-                // Randomise velocity?
-                srand((unsigned)time(NULL));
-                /*float vx = (float)rand() / RAND_MAX;
-                float vy = (float)rand() / RAND_MAX;*/
-                //addVelocity(grid, square.x, square.y, vx, vy);
                 printf("x: %i | y: %i | INDEX: %i : density %f | Vx %f | Vy %f\n",
                     square.x, square.y, INDEX(square.x, square.y),
                     grid->density[INDEX(square.x, square.y)], grid->Vx[INDEX(square.x, square.y)],
@@ -393,10 +412,10 @@ int showGUI(Grid *grid)
 
                     // Randomise velocity?
                     srand((unsigned)time(NULL));
-                    float vx = (float)rand() / RAND_MAX;
-                    float vy = (float)rand() / RAND_MAX;
+                    float vx = -1 + 2 * ((float)rand()) / RAND_MAX;
+                    float vy = -1 + 2 * ((float)rand()) / RAND_MAX;
 
-                    addDensity(grid, square.x, square.y, 0.4f);
+                    addDensity(grid, square.x, square.y, 0.7f);
                     addVelocity(grid, square.x, square.y, vx, vy);
                 break;
             case SDL_WINDOWEVENT:
@@ -435,14 +454,10 @@ int showGUI(Grid *grid)
         {
             for (int j = 0; j < grid->size; j++)
             {
-                // Fade density
-                grid->density[INDEX(i, j)] -= 0.0001f;
-                if (grid->density[INDEX(i, j)] < 0.0f) 
-                    grid->density[INDEX(i, j)] = 0;
-
-                // Add contant velocity
-                /*grid->Vx[INDEX(i, j)] = 0.5f;
-                grid->Vy[INDEX(i, j)] = 0.5f;*/
+                //// Fade density
+                //grid->density[INDEX(i, j)] -= 0.0001f;
+                //if (grid->density[INDEX(i, j)] < 0.0f) 
+                //    grid->density[INDEX(i, j)] = 0.0001f;
 
                 drawDensity(grid, renderer, i, j, cellSize);
                 //drawVelocityX(grid, renderer, i, j, cellSize);
@@ -483,6 +498,7 @@ void drawDensity(Grid *grid, SDL_Renderer *renderer, int i, int j, int cellSize)
     SDL_RenderFillRect(renderer, &cell);
 }
 
+// TODO Test velocities
 void drawVelocityX(Grid *grid, SDL_Renderer* renderer, int i, int j, int cellSize)
 {
     SDL_Rect cell = {
@@ -492,13 +508,15 @@ void drawVelocityX(Grid *grid, SDL_Renderer* renderer, int i, int j, int cellSiz
         .h = cellSize,
     };
 
+    float test = 0.5 * 700.0f;
+
     Uint8 velocity = 0;
     float gridVelocity = grid->Vx[INDEX(i, j)];
     if (gridVelocity > 0.0f)
     {
         //printf("[%i, %i] = %.9g\n", j, i, gridVelocity);
-        velocity = (int)(gridVelocity * 255.0f);
-        //velocity = 255;
+        //velocity = (Uint8)(gridVelocity * 1000);
+        velocity = 255;
     }
 
     SDL_Color colour = { 255, 255, 255, velocity }; // White
