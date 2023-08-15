@@ -1,18 +1,19 @@
 #pragma once
 
 // Grid macros
-#define SIZE 20
+#define SIZE 100
+#define PIXELSIZE 10
 
 // Macro for going from an x,y index to a 1d array index.
 // x and y are in brackets so that when a calulation gets passed in it doesnt mess with the order of operations.
 // E.g INDEX(1-1, 1) turning into (1-1*size+1) which turns into 1-(1*size)+1 which can cause out of bounds.
-#define INDEX(x, y) ((x)*SIZE+(y))
+#define INDEX(x, y) ((x)+(SIZE * y))
 
 // Sim macros
 #define DELTATIME 1.0f
-#define DIFFUSION 1.0f
-#define VISCOSITY 1.0f
-#define ITTERATION 1
+#define DIFFUSION 0.00000000001f
+#define VISCOSITY 0.0000001f
+#define ITTERATION 100
 
 typedef enum ArrayType {
     ArrayType_OTHER = 0,
@@ -43,11 +44,11 @@ void freeGrid(Grid* grid);
 void printDensities(Grid* grid);
 void addDensity(Grid* grid, int x, int y, float amount);
 void addVelocity(Grid* grid, int x, int y, float amountX, float amountY);
-int showGUI();
+int showGUI(Grid* grid);
 
 static void setBoundary(ArrayType arrayType, float* array, int size);
 static void solve(ArrayType arrayType, float* array, float* prevArray, float flow, float deltaTime, int iteration, int size);
 void diffuse(ArrayType arrayType, float* array, float* prevArray, float flow, float deltaTime, int iteration, int size);
 static void project(float* velocX, float* velocY, float* p, float* div, int iter, int N);
 static void advect(int b, float* d, float* d0, float* velocX, float* velocY, float dt, int N);
-void runSim(Grid* grid);
+void simStep(Grid* grid);
