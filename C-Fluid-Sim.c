@@ -422,25 +422,12 @@ int showGUI(Grid *grid)
                 if (grid->density[INDEX(i, j)] < 0.0f) 
                     grid->density[INDEX(i, j)] = 0;
 
-                SDL_Rect cell = {
-                    .x = i * cellSize,
-                    .y = j * cellSize,
-                    .w = cellSize,
-                    .h = cellSize,    
-                };
-                
-                Uint8 density = 0;
-                float gridDensity = grid->density[INDEX(i, j)];
-                if (gridDensity > 0.0f)
-                {
-                    //printf("[%i, %i] = %.9g\n", j, i, gridDensity);
-                    density = (int)(gridDensity*255.0f);
-                    //density = 255;
-                }
+                // Add contant velocity
+                /*grid->Vx[INDEX(i, j)] = 0.5f;
+                grid->Vy[INDEX(i, j)] = 0.5f;*/
 
-                SDL_Color colour = { 255, 255, 255, density }; // White
-                SDL_SetRenderDrawColor(renderer, colour.r, colour.g, colour.b, colour.a);
-                SDL_RenderFillRect(renderer, &cell);
+                //drawDensity(grid, renderer, i, j, cellSize);
+                drawVelocityX(grid, renderer, i, j, cellSize);
             }
         }
 
@@ -453,4 +440,50 @@ int showGUI(Grid *grid)
     SDL_Quit();
 
     return EXIT_SUCCESS;
+}
+
+void drawDensity(Grid *grid, SDL_Renderer *renderer, int i, int j, int cellSize)
+{
+    SDL_Rect cell = {
+        .x = i * cellSize,
+        .y = j * cellSize,
+        .w = cellSize,
+        .h = cellSize,
+    };
+
+    Uint8 density = 0;
+    float gridDensity = grid->density[INDEX(i, j)];
+    if (gridDensity > 0.0f)
+    {
+        //printf("[%i, %i] = %.9g\n", j, i, gridDensity);
+        density = (int)(gridDensity * 255.0f);
+        //density = 255;
+    }
+
+    SDL_Color colour = { 255, 255, 255, density }; // White
+    SDL_SetRenderDrawColor(renderer, colour.r, colour.g, colour.b, colour.a);
+    SDL_RenderFillRect(renderer, &cell);
+}
+
+void drawVelocityX(Grid *grid, SDL_Renderer* renderer, int i, int j, int cellSize)
+{
+    SDL_Rect cell = {
+        .x = i * cellSize,
+        .y = j * cellSize,
+        .w = cellSize,
+        .h = cellSize,
+    };
+
+    Uint8 velocity = 0;
+    float gridVelocity = grid->Vx[INDEX(i, j)];
+    if (gridVelocity > 0.0f)
+    {
+        //printf("[%i, %i] = %.9g\n", j, i, gridVelocity);
+        velocity = (int)(gridVelocity * 255.0f);
+        //velocity = 255;
+    }
+
+    SDL_Color colour = { 255, 255, 255, velocity }; // White
+    SDL_SetRenderDrawColor(renderer, colour.r, colour.g, colour.b, colour.a);
+    SDL_RenderFillRect(renderer, &cell);
 }
