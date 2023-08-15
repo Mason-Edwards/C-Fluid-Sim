@@ -13,7 +13,7 @@
 #define DELTATIME 1.0f
 #define DIFFUSION 0.00000000001f
 #define VISCOSITY 0.0000001f
-#define ITTERATION 100
+#define ITTERATION 1
 
 typedef enum ArrayType {
     ArrayType_OTHER = 0,

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <windows.h>
+#include <time.h>
 // Try CMAKE next time around.
 #include <SDL.h>
 
@@ -13,8 +14,8 @@ int main(int argc, char *argv[])
 
     for (int i = 0; i < grid->area; i++)
     {
-        grid->Vx[i] += 0.5f;
-        grid->Vy[i] += 0.5f;
+        grid->Vx[i] += 0.1f;
+        grid->Vy[i] += 0.1f;
     }
 
     showGUI(grid);
@@ -145,35 +146,19 @@ static void solve(ArrayType arrayType, float* array, float* prevArray, float flo
 */
 static void setBoundary(ArrayType arrayType, float* array, int size)
 {
-    // Loop though the top and bottom row cells of the grid, excluding the corners.
-    for(int i = 1; i < size - 1; i++)
-    {
-        array[INDEX(i, 0)] = arrayType == ArrayType_Vy ? -array[INDEX(i, 1)] : array[INDEX(i, 1)];
-        array[INDEX(i, size - 1)] = arrayType == ArrayType_Vy ? -array[INDEX(i, size - 2)] : array[INDEX(i, size - 2)];
+    for (int i = 1; i < size - 1; i++) {
+        array[INDEX(i, 0)] = arrayType == 2 ? -array[INDEX(i, 1)] : array[INDEX(i, 1)];
+        array[INDEX(i, size - 1)] = arrayType == 2 ? -array[INDEX(i, size - 2)] : array[INDEX(i, size - 2)];
+    }
+    for (int j = 1; j < size - 1; j++) {
+        array[INDEX(0, j)] = arrayType == 1 ? -array[INDEX(1, j)] : array[INDEX(1, j)];
+        array[INDEX(size - 1, j)] = arrayType == 1 ? -array[INDEX(size - 2, j)] : array[INDEX(size - 2, j)];
     }
 
-    // Loop though the left and right columns cells of the grid, excluding the corners.
-    for(int i = 1; i < size - 1; i++)
-    {
-        array[INDEX(0, i)] = arrayType == ArrayType_Vx ? -array[INDEX(1, i)] : array[INDEX(1, i)];
-        array[INDEX(size - 1, i)] = arrayType == ArrayType_Vx ? -array[INDEX(size - 2, i)] : array[INDEX(size - 2, i)];
-    }
-
-    // Set the corners manually as they behave differently.
-    // Top left
-    array[INDEX(0, 0)] = 0.33f * (array[INDEX(1, 0)]
-        + array[INDEX(0, 1)]);
-    // Bottom left
-    array[INDEX(0, size - 1)] = 0.33f * (array[INDEX(1, size - 1)]
-        + array[INDEX(0, size - 2)]);
-    
-    // Top right
-    array[INDEX(size - 1, 0)] = 0.33f * (array[INDEX(size - 2, 0)]
-        + array[INDEX(size - 1, 1)]);
-
-    // Bottom right
-    array[INDEX(size - 1, size - 1)] = 0.33f * (array[INDEX(size - 2, size - 1)]
-        + array[INDEX(size - 1, size - 2)]);
+    array[INDEX(0, 0)] = 0.5f * (array[INDEX(1, 0)] + array[INDEX(0, 1)]);
+    array[INDEX(0, size - 1)] = 0.5f * (array[INDEX(1, size - 1)] + array[INDEX(0, size - 2)]);
+    array[INDEX(size - 1, 0)] = 0.5f * (array[INDEX(size - 2, 0)] + array[INDEX(size - 1, 1)]);
+    array[INDEX(size - 1, size - 1)] = 0.5f * (array[INDEX(size - 2, size - 1)] + array[INDEX(size - 1, size - 2)]);
     
 }
 
@@ -254,15 +239,21 @@ static void advect(int b, float* d, float* d0, float* velocX, float* velocY, flo
             int j0i = (int)j0;
             int j1i = (int)j1;
 
-            /*d[INDEX(i, j)] =
-                s0 * (t0 * (d0[INDEX(i0i, j0i)]
-                    + d0[INDEX(i0i, j0i)])
-                    + (t1 * (d0[INDEX(i0i, j1i)]
-                        + d0[INDEX(i0i, j1i)])))
-                + s1 * (t0 * (d0[INDEX(i1i, j0i)]
-                    + d0[INDEX(i1i, j0i)])
-                    + (t1 * (d0[INDEX(i1i, j1i)]
-                        + d0[INDEX(i1i, j1i)])));*/
+            //d[INDEX(i, j)] =
+            //    s0 * (t0 * (d0[INDEX(i0i, j0i)]
+            //        + d0[INDEX(i0i, j0i)])
+            //        + (t1 * (d0[INDEX(i0i, j1i)]
+            //            + d0[INDEX(i0i, j1i)])))
+            //    + s1 * (t0 * (d0[INDEX(i1i, j0i)]
+            //        + d0[INDEX(i1i, j0i)])
+            //        + (t1 * (d0[INDEX(i1i, j1i)]
+            //            + d0[INDEX(i1i, j1i)])));
+
+            //d[INDEX(i, j)] =
+            //    s0 * (t0 * d0[INDEX(i0i, j0i)])
+            //    + (t1 * d0[INDEX(i0i, j1i)])
+            //    + s1 * (t0 * d0[INDEX(i1i, j0i)])
+            //    + (t1 * d0[INDEX(i1i, j1i)]);
 
             d[INDEX(i, j)] =
                 s0 * (t0 * d0[INDEX(i0i, j0i)] + t1 * d0[INDEX(i0i, j1i)]) +
@@ -309,6 +300,11 @@ void simStep(Grid* grid)
 
 int showGUI(Grid *grid)
 {
+
+    static SDL_MouseMotionEvent prevMouseEvent;
+    prevMouseEvent.x = 0;
+    prevMouseEvent.y = 0;
+
     int cellSize = PIXELSIZE;
     int gridWidth = grid->size;
     int gridHeight = grid->size;
@@ -369,8 +365,12 @@ int showGUI(Grid *grid)
             case SDL_MOUSEBUTTONDOWN:
                 square.x = (event.motion.x / cellSize);
                 square.y = (event.motion.y / cellSize);
-                addDensity(grid, square.x, square.y, 1.f);
-                addVelocity(grid, square.x, square.y, 0.5f, 0.5f);
+                addDensity(grid, square.x, square.y, 20.0f);
+                // Randomise velocity?
+                srand((unsigned)time(NULL));
+                /*float vx = (float)rand() / RAND_MAX;
+                float vy = (float)rand() / RAND_MAX;*/
+                //addVelocity(grid, square.x, square.y, vx, vy);
                 printf("x: %i | y: %i | INDEX: %i : density %f | Vx %f | Vy %f\n",
                     square.x, square.y, INDEX(square.x, square.y),
                     grid->density[INDEX(square.x, square.y)], grid->Vx[INDEX(square.x, square.y)],
@@ -380,6 +380,24 @@ int showGUI(Grid *grid)
             case SDL_MOUSEMOTION:
                 if (!mouseActive)
                     mouseActive = SDL_TRUE;
+                    int x = (event.motion.x / cellSize);
+                    int y = (event.motion.y / cellSize);
+                    square.x = x;
+                    square.y = y;
+
+                    /*Sint32 diffX = event.motion.x - prevMouseEvent.x;
+                    Sint32 diffY = event.motion.y - prevMouseEvent.y;
+
+                    prevMouseEvent.x = event.motion.x;
+                    prevMouseEvent.y = event.motion.y;*/
+
+                    // Randomise velocity?
+                    srand((unsigned)time(NULL));
+                    float vx = (float)rand() / RAND_MAX;
+                    float vy = (float)rand() / RAND_MAX;
+
+                    addDensity(grid, square.x, square.y, 0.4f);
+                    addVelocity(grid, square.x, square.y, vx, vy);
                 break;
             case SDL_WINDOWEVENT:
                 if (event.window.event == SDL_WINDOWEVENT_ENTER && !mouseHover)
@@ -426,8 +444,8 @@ int showGUI(Grid *grid)
                 /*grid->Vx[INDEX(i, j)] = 0.5f;
                 grid->Vy[INDEX(i, j)] = 0.5f;*/
 
-                //drawDensity(grid, renderer, i, j, cellSize);
-                drawVelocityX(grid, renderer, i, j, cellSize);
+                drawDensity(grid, renderer, i, j, cellSize);
+                //drawVelocityX(grid, renderer, i, j, cellSize);
             }
         }
 
