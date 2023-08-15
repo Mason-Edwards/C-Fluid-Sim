@@ -369,9 +369,10 @@ int showGUI(Grid *grid)
                 case SDLK_w:
                     for (int i = 0; i < grid->area; i++)
                     {
-                        grid->Vx[i] = 0.005f;
-                        grid->Vy[i] = 0.005f;
+                        grid->Vx[i] = 0.0005f;
+                        grid->Vy[i] = 0.0005f;
                     }
+                    break;
                 case SDLK_UP:
                 case SDLK_s:
                     for (int i = 0; i < grid->area; i++)
@@ -411,12 +412,12 @@ int showGUI(Grid *grid)
                     prevMouseEvent.y = event.motion.y;*/
 
                     // Randomise velocity?
-                    srand((unsigned)time(NULL));
-                    float vx = -1 + 2 * ((float)rand()) / RAND_MAX;
-                    float vy = -1 + 2 * ((float)rand()) / RAND_MAX;
+                    //srand((unsigned)time(NULL));
+                    //float vx = -1 + 2 * ((float)rand()) / RAND_MAX;
+                    //float vy = -1 + 2 * ((float)rand()) / RAND_MAX;
 
                     addDensity(grid, square.x, square.y, 0.7f);
-                    addVelocity(grid, square.x, square.y, vx, vy);
+                    addVelocity(grid, square.x, square.y, 0.5f, 0.5f);
                 break;
             case SDL_WINDOWEVENT:
                 if (event.window.event == SDL_WINDOWEVENT_ENTER && !mouseHover)
