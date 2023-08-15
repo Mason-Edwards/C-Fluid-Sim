@@ -294,19 +294,6 @@ void simStep(Grid* grid)
     float* s = grid->scratchSpace;
     float* density = grid->density;
 
-    //diffuse(1, vx, vx0, visc, dt, 4, n);
-    //diffuse(2, vy, vy0, visc, dt, 4, n);
-
-    //project(vx, vy, vx0, vy0, 4, n);
-
-    //advect(1, vx, vx0, vx0, vy0, dt, n);
-    //advect(2, vy, vy0, vx0, vy0, dt, n);
-
-    //project(vx, vy, vx0, vy0, 4, n);
-
-    //diffuse(0, s, density, diff, dt, 4, n);
-    //advect(0, density, s, vx, vy, dt, n);
-
     diffuse(1, vx0, vx, visc, dt, 4, n);
     diffuse(2, vy0, vy, visc, dt, 4, n);
 
